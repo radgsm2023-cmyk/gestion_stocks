@@ -62,11 +62,16 @@ export function generateFTRef(seq: number): string {
   return `FT-${seqNum(seq)}-${dateStamp()}`;
 }
 
+import { supabase } from '@/lib/supabase';
+
 export async function getNextSeq(table: string): Promise<number> {
-  const { supabase } = await import('@/lib/supabase');
-  const { count } = await supabase
+  const { count, error } = await supabase
     .from(table)
     .select('*', { count: 'exact', head: true });
+  if (error) {
+    console.error('Erreur comptage', table, error);
+    return 1;
+  }
   return (count || 0) + 1;
 }
 

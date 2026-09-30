@@ -7,7 +7,7 @@ import Modal from '@/components/Modal';
 import Loading from '@/components/Loading';
 import { validateFields, validateField, hasErrors, type FieldErrors } from '@/lib/utils';
 
-const emptyForm = { name: '', contact_person: '', email: '', phone: '', address: '' };
+const emptyForm = { name: '', contact_person: '', email: '', phone: '', address: '', rc: '', nif: '', ai: '' };
 
 export default function Suppliers() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -49,6 +49,9 @@ export default function Suppliers() {
       email: s.email,
       phone: s.phone,
       address: s.address,
+      rc: s.rc || '',
+      nif: s.nif || '',
+      ai: s.ai || '',
     });
     setEditId(s.id);
     setErrors({});
@@ -66,6 +69,9 @@ export default function Suppliers() {
     const fieldErrors = validateFields({
       email: form.email,
       phone: form.phone,
+      rc: form.rc,
+      nif: form.nif,
+      ai: form.ai,
     });
     if (hasErrors(fieldErrors)) {
       setErrors(fieldErrors);
@@ -78,6 +84,9 @@ export default function Suppliers() {
       email: form.email.trim(),
       phone: form.phone.trim(),
       address: form.address.trim(),
+      rc: form.rc.trim(),
+      nif: form.nif.trim(),
+      ai: form.ai.trim(),
     };
     if (editId) {
       await supabase.from('suppliers').update(payload).eq('id', editId);
@@ -163,6 +172,13 @@ export default function Suppliers() {
                 {s.email && <p>{s.email}</p>}
                 {s.phone && <p>{s.phone}</p>}
                 {s.address && <p className="text-xs text-slate-400">{s.address}</p>}
+                {(s.rc || s.nif || s.ai) && (
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {s.rc && <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600">RC: {s.rc}</span>}
+                    {s.nif && <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600">NIF: {s.nif}</span>}
+                    {s.ai && <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600">AI: {s.ai}</span>}
+                  </div>
+                )}
               </div>
             </Card>
           ))}
@@ -183,6 +199,11 @@ export default function Suppliers() {
             <Input label="Téléphone" value={form.phone} onChange={(v) => updateField('phone', v)} error={errors.phone} hint={!errors.phone ? 'ex: +212 6 12 34 56 78' : undefined} />
           </div>
           <Textarea label="Adresse" value={form.address} onChange={(v) => setForm({ ...form, address: v })} rows={2} />
+          <div className="grid grid-cols-3 gap-4">
+            <Input label="RC" value={form.rc} onChange={(v) => updateField('rc', v)} error={errors.rc} hint={!errors.rc ? 'ex: 99A9999999' : undefined} />
+            <Input label="NIF" value={form.nif} onChange={(v) => updateField('nif', v)} error={errors.nif} hint={!errors.nif ? '15 à 20 chiffres' : undefined} />
+            <Input label="AI" value={form.ai} onChange={(v) => updateField('ai', v)} error={errors.ai} hint={!errors.ai ? '11 chiffres' : undefined} />
+          </div>
           <div className="flex gap-3 pt-2">
             <Button variant="secondary" onClick={() => setModalOpen(false)} className="flex-1">
               Annuler

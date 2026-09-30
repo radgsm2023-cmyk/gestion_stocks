@@ -1763,6 +1763,27 @@ export default function Purchases() {
 
                   )}
 
+                  {purchaseOrderModal.supplier.rc && (
+                    <div>
+                      <span className="text-slate-500">RC :</span>{' '}
+                      {purchaseOrderModal.supplier.rc}
+                    </div>
+                  )}
+
+                  {purchaseOrderModal.supplier.nif && (
+                    <div>
+                      <span className="text-slate-500">NIF :</span>{' '}
+                      {purchaseOrderModal.supplier.nif}
+                    </div>
+                  )}
+
+                  {purchaseOrderModal.supplier.ai && (
+                    <div>
+                      <span className="text-slate-500">AI :</span>{' '}
+                      {purchaseOrderModal.supplier.ai}
+                    </div>
+                  )}
+
                 </div>
 
               ) : (
