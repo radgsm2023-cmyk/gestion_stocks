@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, generatePurchaseRef, generateBCRef, getNextSeq } from '@/lib/utils';
 import type { Product, Supplier, Purchase } from '@/types';
 import {
   Card,
@@ -129,67 +129,11 @@ export default function Purchases() {
     setLoading(false);
   }
 
-  /**
-   * Génère une référence achat :
-   * ACH-001-28092026
-   * ACH-002-28092026
-   * etc.
-   */
   async function getNextPurchaseReference(
     purchaseDate: string
   ): Promise<string> {
-    const { data, error } = await supabase
-      .from('purchases')
-      .select('reference');
-
-    if (error) {
-      console.error(
-        'Erreur récupération références achats:',
-        error
-      );
-
-      return `ACH-001-${formatDateForReference(purchaseDate)}`;
-    }
-
-    let maxNumber = 0;
-
-    for (const row of data || []) {
-      const reference = String(row.reference || '');
-
-      const match = reference.match(
-        /^ACH-(\d+)-\d{8}$/
-      );
-
-      if (match) {
-        const number = parseInt(match[1], 10);
-
-        if (number > maxNumber) {
-          maxNumber = number;
-        }
-      }
-    }
-
-    const nextNumber = maxNumber + 1;
-
-    return `ACH-${String(nextNumber).padStart(3, '0')}-${formatDateForReference(
-      purchaseDate
-    )}`;
-  }
-
-  function formatDateForReference(date: string): string {
-    const parts = date.split('-');
-
-    if (parts.length !== 3) {
-      const now = new Date();
-
-      return `${String(now.getDate()).padStart(2, '0')}${String(
-        now.getMonth() + 1
-      ).padStart(2, '0')}${now.getFullYear()}`;
-    }
-
-    const [year, month, day] = parts;
-
-    return `${day}${month}${year}`;
+    const seq = await getNextSeq('purchases');
+    return generatePurchaseRef(seq);
   }
 
   async function openAdd() {
@@ -479,25 +423,11 @@ export default function Purchases() {
         0
       );
 
-      /*
-       * Exemple :
-       * ACH-001-28092026
-       *
-       * devient :
-       * BC-001-28092026
-       */
       let orderReference =
         purchase.reference;
 
-      if (
-        orderReference.startsWith('ACH-')
-      ) {
-        orderReference =
-          `BC-${orderReference.substring(4)}`;
-      } else {
-        orderReference =
-          `BC-${orderReference}`;
-      }
+      const bcSeq = await getNextSeq('purchase_orders');
+      orderReference = generateBCRef(bcSeq);
 
       setPurchaseOrderModal({
         reference: orderReference,
@@ -629,6 +559,18 @@ export default function Purchases() {
 
     const supplierEmail =
       order.supplier?.email ||
+      '';
+
+    const supplierRC =
+      order.supplier?.rc ||
+      '';
+
+    const supplierNIF =
+      order.supplier?.nif ||
+      '';
+
+    const supplierAI =
+      order.supplier?.ai ||
       '';
 
     const rows =
@@ -853,6 +795,30 @@ export default function Purchases() {
               : ''
           }
 
+          ${
+            supplierRC
+              ? `<div>RC : ${escapeHtml(
+                  supplierRC
+                )}</div>`
+              : ''
+          }
+
+          ${
+            supplierNIF
+              ? `<div>NIF : ${escapeHtml(
+                  supplierNIF
+                )}</div>`
+              : ''
+          }
+
+          ${
+            supplierAI
+              ? `<div>AI : ${escapeHtml(
+                  supplierAI
+                )}</div>`
+              : ''
+          }
+
         </div>
 
         <table>
@@ -963,7 +929,7 @@ export default function Purchases() {
 
         <div>
           <h1 className="text-2xl font-bold text-slate-800">
-            Achats
+            Liste des achats
           </h1>
 
           <p className="text-sm text-slate-500 mt-1">

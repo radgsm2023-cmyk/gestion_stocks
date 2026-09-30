@@ -15,7 +15,10 @@ import { supabase } from '@/lib/supabase';
 import {
   formatCurrency,
   formatDate,
-  generateReference,
+  generateSalesRef,
+  generateBLRef,
+  generateFTRef,
+  getNextSeq,
 } from '@/lib/utils';
 
 import type {
@@ -178,22 +181,18 @@ export default function Sales() {
     setLoading(false);
   }
 
-  function openAdd() {
+  async function openAdd() {
+    const seq = await getNextSeq('sales');
     setForm({
       customer_type: 'registered',
       customer_id: '',
       customer_name: '',
-      reference:
-        generateReference('VTE'),
-
+      reference: generateSalesRef(seq),
       sale_date: new Date()
         .toISOString()
         .slice(0, 10),
-
       status: 'pending',
-
       notes: '',
-
       create_invoice: true,
     });
 
@@ -398,31 +397,18 @@ export default function Sales() {
       if (
         form.create_invoice
       ) {
+        const ftSeq = await getNextSeq('invoices');
         await supabase
           .from('invoices')
           .insert({
             sale_id: sale.id,
-
-            customer_id:
-              customerId,
-
-            reference:
-              generateReference(
-                'FAC'
-              ),
-
-            total_amount:
-              totalAmount,
-
+            customer_id: customerId,
+            reference: generateFTRef(ftSeq),
+            total_amount: totalAmount,
             paid_amount: 0,
-
             status: 'unpaid',
-
-            issue_date:
-              form.sale_date,
-
+            issue_date: form.sale_date,
             due_date: null,
-
             notes: '',
           });
       }
@@ -619,8 +605,21 @@ export default function Sales() {
         data.reference =
           invoice.reference;
       } else {
-        data.reference =
-          `FAC-${sale.reference}`;
+        const ftSeq = await getNextSeq('invoices');
+        await supabase
+          .from('invoices')
+          .insert({
+            sale_id: sale.id,
+            customer_id: sale.customer_id,
+            reference: generateFTRef(ftSeq),
+            total_amount: sale.total_amount,
+            paid_amount: sale.paid_amount,
+            status: sale.paid_amount >= sale.total_amount ? 'paid' : 'unpaid',
+            issue_date: sale.sale_date,
+            due_date: null,
+            notes: '',
+          });
+        data.reference = generateFTRef(ftSeq);
       }
 
       setInvoiceModal(data);
@@ -650,8 +649,8 @@ export default function Sales() {
         return;
       }
 
-      data.reference =
-        `BL-${sale.reference}`;
+      const blSeq = await getNextSeq('delivery_notes');
+      data.reference = generateBLRef(blSeq);
 
       setDeliveryModal(data);
     } finally {
@@ -827,6 +826,18 @@ export default function Sales() {
     const customerAddress =
       data.customer?.address ||
       '';
+
+    const customerRC =
+      data.customer?.rc ||
+      ''
+
+    const customerNIF =
+      data.customer?.nif ||
+      ''
+
+    const customerAI =
+      data.customer?.ai ||
+      ''
 
     const rows =
       data.items
@@ -1180,6 +1191,42 @@ export default function Sales() {
               : ''
           }
 
+          ${
+            customerRC
+              ? `
+                <div>
+                  RC : ${escapeHtml(
+                    customerRC
+                  )}
+                </div>
+              `
+              : ''
+          }
+
+          ${
+            customerNIF
+              ? `
+                <div>
+                  NIF : ${escapeHtml(
+                    customerNIF
+                  )}
+                </div>
+              `
+              : ''
+          }
+
+          ${
+            customerAI
+              ? `
+                <div>
+                  AI : ${escapeHtml(
+                    customerAI
+                  )}
+                </div>
+              `
+              : ''
+          }
+
         </div>
 
         <table>
@@ -1281,7 +1328,7 @@ export default function Sales() {
         <div>
 
           <h1 className="text-2xl font-bold text-slate-800">
-            Ventes
+            Liste des ventes
           </h1>
 
           <p className="text-sm text-slate-500 mt-1">
@@ -2302,6 +2349,57 @@ export default function Sales() {
 
                   )}
 
+                  {invoiceModal.customer.rc && (
+
+                    <div>
+
+                      <span className="text-slate-500">
+                        RC :
+                      </span>{' '}
+
+                      {
+                        invoiceModal
+                          .customer.rc
+                      }
+
+                    </div>
+
+                  )}
+
+                  {invoiceModal.customer.nif && (
+
+                    <div>
+
+                      <span className="text-slate-500">
+                        NIF :
+                      </span>{' '}
+
+                      {
+                        invoiceModal
+                          .customer.nif
+                      }
+
+                    </div>
+
+                  )}
+
+                  {invoiceModal.customer.ai && (
+
+                    <div>
+
+                      <span className="text-slate-500">
+                        AI :
+                      </span>{' '}
+
+                      {
+                        invoiceModal
+                          .customer.ai
+                      }
+
+                    </div>
+
+                  )}
+
                 </div>
 
               ) : (
@@ -2623,6 +2721,57 @@ export default function Sales() {
                         deliveryModal
                           .customer
                           .address
+                      }
+
+                    </div>
+
+                  )}
+
+                  {deliveryModal.customer.rc && (
+
+                    <div>
+
+                      <span className="text-slate-500">
+                        RC :
+                      </span>{' '}
+
+                      {
+                        deliveryModal
+                          .customer.rc
+                      }
+
+                    </div>
+
+                  )}
+
+                  {deliveryModal.customer.nif && (
+
+                    <div>
+
+                      <span className="text-slate-500">
+                        NIF :
+                      </span>{' '}
+
+                      {
+                        deliveryModal
+                          .customer.nif
+                      }
+
+                    </div>
+
+                  )}
+
+                  {deliveryModal.customer.ai && (
+
+                    <div>
+
+                      <span className="text-slate-500">
+                        AI :
+                      </span>{' '}
+
+                      {
+                        deliveryModal
+                          .customer.ai
                       }
 
                     </div>

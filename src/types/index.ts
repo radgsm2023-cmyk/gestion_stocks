@@ -20,6 +20,9 @@ export interface Supplier {
   email: string;
   phone: string;
   address: string;
+  rc: string;
+  nif: string;
+  ai: string;
   created_at: string;
 }
 

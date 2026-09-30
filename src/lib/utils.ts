@@ -30,6 +30,46 @@ export function generateReference(prefix: string): string {
   return `${prefix}-${year}-${rand}`;
 }
 
+function dateStamp(): string {
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return `${dd}${mm}${yyyy}`;
+}
+
+function seqNum(n: number): string {
+  return String(n).padStart(3, '0');
+}
+
+export function generateSalesRef(seq: number): string {
+  return `VENT-${seqNum(seq)}-${dateStamp()}`;
+}
+
+export function generatePurchaseRef(seq: number): string {
+  return `ACH-${seqNum(seq)}-${dateStamp()}`;
+}
+
+export function generateBCRef(seq: number): string {
+  return `BC-${seqNum(seq)}-${dateStamp()}`;
+}
+
+export function generateBLRef(seq: number): string {
+  return `BL-${seqNum(seq)}-${dateStamp()}`;
+}
+
+export function generateFTRef(seq: number): string {
+  return `FT-${seqNum(seq)}-${dateStamp()}`;
+}
+
+export async function getNextSeq(table: string): Promise<number> {
+  const { supabase } = await import('@/lib/supabase');
+  const { count } = await supabase
+    .from(table)
+    .select('*', { count: 'exact', head: true });
+  return (count || 0) + 1;
+}
+
 export function cn(...classes: (string | false | undefined)[]): string {
   return classes.filter(Boolean).join(' ');
 }
@@ -37,7 +77,7 @@ export function cn(...classes: (string | false | undefined)[]): string {
 // ===== Validation patterns =====
 
 export const patterns = {
-  nif: { regex: /^\d{15}$/, label: 'NIF', format: '15 chiffres', example: '123456789012345' },
+  nif: { regex: /^\d{15,20}$/, label: 'NIF', format: '15 à 20 chiffres', example: '123456789012345' },
   ai: { regex: /^\d{11}$/, label: 'AI', format: '11 chiffres', example: '12345678901' },
   rc: { regex: /^\d{2}[A-Z]\d{7}$/, label: 'RC', format: '2 chiffres + 1 lettre + 7 chiffres', example: '99A9999999' },
   phone: { regex: /^[\d\s+().-]{8,20}$/, label: 'Téléphone', format: '8 à 20 caractères', example: '+212 6 12 34 56 78' },
