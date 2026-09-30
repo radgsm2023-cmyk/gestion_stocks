@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Receipt, Eye, CreditCard } from 'lucide-react';
+import { Receipt, Eye, CreditCard, Search, Filter } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type { Invoice } from '@/types';
@@ -15,6 +15,7 @@ export default function Invoices() {
   const [saving, setSaving] = useState(false);
   const [payment, setPayment] = useState({ amount: '0', payment_date: new Date().toISOString().slice(0, 10) });
   const [filter, setFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   useEffect(() => {
     load();
@@ -37,8 +38,9 @@ export default function Invoices() {
 
   const filtered = invoices.filter(
     (i) =>
-      i.reference.toLowerCase().includes(filter.toLowerCase()) ||
-      (i.customer?.name || '').toLowerCase().includes(filter.toLowerCase())
+      (i.reference.toLowerCase().includes(filter.toLowerCase()) ||
+      (i.customer?.name || '').toLowerCase().includes(filter.toLowerCase())) &&
+      (!statusFilter || i.status === statusFilter)
   );
 
   async function openDetail(inv: Invoice) {
@@ -91,21 +93,38 @@ export default function Invoices() {
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Factures</h1>
+          <h1 className="text-2xl font-bold text-slate-800">Liste des factures</h1>
           <p className="text-sm text-slate-500 mt-1">
             {invoices.length} facture(s) · {formatCurrency(totalUnpaid)} non payé
           </p>
         </div>
       </div>
 
-      <div className="relative max-w-md">
-        <input
-          type="text"
-          placeholder="Rechercher une facture..."
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Rechercher une facture..."
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-slate-400" />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2.5 rounded-lg border border-slate-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+          >
+            <option value="">Tous les statuts</option>
+            <option value="unpaid">Impayée</option>
+            <option value="partial">Partiellement payée</option>
+            <option value="paid">Payée</option>
+            <option value="cancelled">Annulée</option>
+          </select>
+        </div>
       </div>
 
       {filtered.length === 0 ? (

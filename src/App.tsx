@@ -11,8 +11,6 @@ import Purchases from '@/pages/Purchases';
 import Sales from '@/pages/Sales';
 import PurchaseReturns from '@/pages/PurchaseReturns';
 import SalesReturns from '@/pages/SalesReturns';
-import PurchaseOrders from '@/pages/PurchaseOrders';
-import DeliveryNotes from '@/pages/DeliveryNotes';
 import Invoices from '@/pages/Invoices';
 import Users from '@/pages/Users';
 import Settings from '@/pages/Settings';
@@ -53,8 +51,6 @@ function AppContent() {
       {effectivePage === 'sales' && <Sales />}
       {effectivePage === 'purchase-returns' && <PurchaseReturns />}
       {effectivePage === 'sales-returns' && <SalesReturns />}
-      {effectivePage === 'purchase-orders' && <PurchaseOrders />}
-      {effectivePage === 'delivery-notes' && <DeliveryNotes />}
       {effectivePage === 'invoices' && <Invoices />}
       {effectivePage === 'users' && isAdmin && <Users />}
       {effectivePage === 'settings' && isAdmin && <Settings />}

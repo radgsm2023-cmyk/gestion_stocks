@@ -247,8 +247,6 @@ export type PageKey =
   | 'purchase-returns'
   | 'sales'
   | 'sales-returns'
-  | 'purchase-orders'
-  | 'delivery-notes'
   | 'invoices'
   | 'users'
   | 'settings';
