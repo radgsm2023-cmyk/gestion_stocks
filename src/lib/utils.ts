@@ -59,7 +59,7 @@ export function generateBLRef(seq: number): string {
 }
 
 export function generateFTRef(seq: number): string {
-  return `FT-${seqNum(seq)}-${dateStamp()}`;
+  return `FACT-${seqNum(seq)}-${dateStamp()}`;
 }
 
 import { supabase } from '@/lib/supabase';

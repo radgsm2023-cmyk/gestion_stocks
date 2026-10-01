@@ -20,6 +20,7 @@ import {
   generateFTRef,
   getNextSeq,
 } from '@/lib/utils';
+import { useAuth } from '@/lib/auth';
 
 import type {
   Product,
@@ -65,6 +66,7 @@ interface DocumentData {
 }
 
 export default function Sales() {
+  const { settings } = useAuth();
   const [sales, setSales] = useState<Sale[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -839,6 +841,20 @@ export default function Sales() {
       data.customer?.ai ||
       ''
 
+    const company = settings;
+
+    const companyInfo = company && (company.company_name || company.company_address)
+      ? `
+        <div class="company-box">
+          ${company.company_name ? `<div class="company-name">${escapeHtml(company.company_name)}</div>` : ''}
+          ${company.company_address ? `<div>${escapeHtml(company.company_address)}</div>` : ''}
+          ${company.company_phone ? `<div>Tél : ${escapeHtml(company.company_phone)}</div>` : ''}
+          ${company.company_email ? `<div>${escapeHtml(company.company_email)}</div>` : ''}
+          ${(company.rc || company.nif || company.ai) ? `<div class="company-ids">${company.rc ? `RC: ${escapeHtml(company.rc)} · ` : ''}${company.nif ? `NIF: ${escapeHtml(company.nif)} · ` : ''}${company.ai ? `AI: ${escapeHtml(company.ai)}` : ''}</div>` : ''}
+        </div>
+      `
+      : '';
+
     const rows =
       data.items
         .map(
@@ -955,6 +971,25 @@ export default function Sales() {
 
             margin-bottom:
               30px;
+          }
+
+          .company-box {
+            text-align: right;
+            font-size: 13px;
+            color: #475569;
+          }
+
+          .company-name {
+            font-weight: bold;
+            font-size: 15px;
+            color: #1e293b;
+            margin-bottom: 4px;
+          }
+
+          .company-ids {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 2px;
           }
 
           .title {
@@ -1135,6 +1170,8 @@ export default function Sales() {
             </div>
 
           </div>
+
+          ${companyInfo}
 
         </div>
 
@@ -1328,7 +1365,7 @@ export default function Sales() {
         <div>
 
           <h1 className="text-2xl font-bold text-slate-800">
-            Liste des ventes
+            Ventes
           </h1>
 
           <p className="text-sm text-slate-500 mt-1">
@@ -2250,9 +2287,33 @@ export default function Sales() {
 
               </div>
 
-              <div className="flex items-start">
+              <div className="text-left sm:text-right">
 
-                <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-50 text-violet-700 font-medium text-sm">
+                {settings && (
+                  <div className="text-sm text-slate-600 space-y-0.5">
+                    {settings.company_name && (
+                      <p className="font-bold text-slate-800">{settings.company_name}</p>
+                    )}
+                    {settings.company_address && (
+                      <p>{settings.company_address}</p>
+                    )}
+                    {settings.company_phone && (
+                      <p>Tél : {settings.company_phone}</p>
+                    )}
+                    {settings.company_email && (
+                      <p>{settings.company_email}</p>
+                    )}
+                    {(settings.rc || settings.nif || settings.ai) && (
+                      <p className="text-xs text-slate-400">
+                        {settings.rc && `RC: ${settings.rc} · `}
+                        {settings.nif && `NIF: ${settings.nif} · `}
+                        {settings.ai && `AI: ${settings.ai}`}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-50 text-violet-700 font-medium text-sm mt-2">
 
                   <Receipt className="w-4 h-4" />
 
@@ -2628,9 +2689,33 @@ export default function Sales() {
 
               </div>
 
-              <div>
+              <div className="text-left sm:text-right">
 
-                <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-50 text-orange-700 font-medium text-sm">
+                {settings && (
+                  <div className="text-sm text-slate-600 space-y-0.5">
+                    {settings.company_name && (
+                      <p className="font-bold text-slate-800">{settings.company_name}</p>
+                    )}
+                    {settings.company_address && (
+                      <p>{settings.company_address}</p>
+                    )}
+                    {settings.company_phone && (
+                      <p>Tél : {settings.company_phone}</p>
+                    )}
+                    {settings.company_email && (
+                      <p>{settings.company_email}</p>
+                    )}
+                    {(settings.rc || settings.nif || settings.ai) && (
+                      <p className="text-xs text-slate-400">
+                        {settings.rc && `RC: ${settings.rc} · `}
+                        {settings.nif && `NIF: ${settings.nif} · `}
+                        {settings.ai && `AI: ${settings.ai}`}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-50 text-orange-700 font-medium text-sm mt-2">
 
                   <Truck className="w-4 h-4" />
 
