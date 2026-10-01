@@ -8,6 +8,8 @@ import {
   X,
   FileText,
   Printer,
+  Search,
+  Filter,
 } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
@@ -68,6 +70,10 @@ export default function Purchases() {
     useState<PurchaseOrderPreview | null>(null);
 
   const [loadingPurchaseOrder, setLoadingPurchaseOrder] = useState(false);
+
+  const [filterSupplier, setFilterSupplier] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
 
   const [form, setForm] = useState({
     supplier_id: '',
@@ -953,6 +959,13 @@ export default function Purchases() {
       );
   }
 
+  const filteredPurchases = purchases.filter((p) => {
+    if (filterSupplier && p.supplier_id !== filterSupplier) return false;
+    if (filterDateFrom && p.purchase_date < filterDateFrom) return false;
+    if (filterDateTo && p.purchase_date > filterDateTo) return false;
+    return true;
+  });
+
   if (loading) {
     return <Loading />;
   }
@@ -970,7 +983,7 @@ export default function Purchases() {
           </h1>
 
           <p className="text-sm text-slate-500 mt-1">
-            {purchases.length} achat(s)
+            {filteredPurchases.length} achat(s)
           </p>
         </div>
 
@@ -981,9 +994,53 @@ export default function Purchases() {
 
       </div>
 
+      {/* Filtres */}
+
+      <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-slate-400 shrink-0" />
+          <select
+            value={filterSupplier}
+            onChange={(e) => setFilterSupplier(e.target.value)}
+            className="px-3 py-2.5 rounded-lg border border-slate-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+          >
+            <option value="">Tous les fournisseurs</option>
+            {suppliers.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-slate-400 shrink-0">Du</span>
+          <input
+            type="date"
+            value={filterDateFrom}
+            onChange={(e) => setFilterDateFrom(e.target.value)}
+            className="px-3 py-2.5 rounded-lg border border-slate-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-slate-400 shrink-0">Au</span>
+          <input
+            type="date"
+            value={filterDateTo}
+            onChange={(e) => setFilterDateTo(e.target.value)}
+            className="px-3 py-2.5 rounded-lg border border-slate-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+        </div>
+        {(filterSupplier || filterDateFrom || filterDateTo) && (
+          <button
+            onClick={() => { setFilterSupplier(''); setFilterDateFrom(''); setFilterDateTo(''); }}
+            className="px-3 py-2.5 rounded-lg text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+          >
+            Réinitialiser
+          </button>
+        )}
+      </div>
+
       {/* Liste */}
 
-      {purchases.length === 0 ? (
+      {filteredPurchases.length === 0 ? (
 
         <Card>
 
@@ -1047,7 +1104,7 @@ export default function Purchases() {
 
               <tbody className="divide-y divide-slate-100">
 
-                {purchases.map((p) => (
+                {filteredPurchases.map((p) => (
 
                   <tr
                     key={p.id}
