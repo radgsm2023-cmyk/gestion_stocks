@@ -8,7 +8,6 @@ import {
   ArrowLeftRight,
   TrendingUp,
   Undo2,
-  Receipt,
   Boxes,
   Menu,
   X,
@@ -39,13 +38,12 @@ const navItems: NavItem[] = [
   { key: 'purchase-returns', label: 'Retours Achats', icon: Undo2, group: 'Transactions' },
   { key: 'sales', label: 'Ventes', icon: TrendingUp, group: 'Transactions' },
   { key: 'sales-returns', label: 'Retours Ventes', icon: ArrowLeftRight, group: 'Transactions' },
-  { key: 'invoices', label: 'Factures', icon: Receipt, group: 'Documents' },
   { key: 'users', label: 'Utilisateurs', icon: UserCog, group: 'Administration', adminOnly: true },
   { key: 'settings', label: 'Paramètres', icon: Settings, group: 'Administration', adminOnly: true },
 ];
 
 const bottomNavKeys: PageKey[] = ['dashboard', 'products', 'sales', 'purchases'];
-const moreNavKeys: PageKey[] = ['suppliers', 'customers', 'purchase-returns', 'sales-returns', 'invoices'];
+const moreNavKeys: PageKey[] = ['suppliers', 'customers', 'purchase-returns', 'sales-returns'];
 
 interface LayoutProps {
   currentPage: PageKey;

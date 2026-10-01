@@ -250,6 +250,5 @@ export type PageKey =
   | 'purchase-returns'
   | 'sales'
   | 'sales-returns'
-  | 'invoices'
   | 'users'
   | 'settings';

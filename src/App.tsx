@@ -11,7 +11,6 @@ import Purchases from '@/pages/Purchases';
 import Sales from '@/pages/Sales';
 import PurchaseReturns from '@/pages/PurchaseReturns';
 import SalesReturns from '@/pages/SalesReturns';
-import Invoices from '@/pages/Invoices';
 import Users from '@/pages/Users';
 import Settings from '@/pages/Settings';
 import type { PageKey } from '@/types';
@@ -51,7 +50,6 @@ function AppContent() {
       {effectivePage === 'sales' && <Sales />}
       {effectivePage === 'purchase-returns' && <PurchaseReturns />}
       {effectivePage === 'sales-returns' && <SalesReturns />}
-      {effectivePage === 'invoices' && <Invoices />}
       {effectivePage === 'users' && isAdmin && <Users />}
       {effectivePage === 'settings' && isAdmin && <Settings />}
     </Layout>
