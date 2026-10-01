@@ -35,17 +35,17 @@ const navItems: NavItem[] = [
   { key: 'products', label: 'Produits', icon: Package, group: 'Stock' },
   { key: 'suppliers', label: 'Fournisseurs', icon: Truck, group: 'Stock' },
   { key: 'customers', label: 'Clients', icon: Users, group: 'Stock' },
-  { key: 'purchases', label: 'Liste des achats', icon: ShoppingCart, group: 'Transactions' },
+  { key: 'purchases', label: 'Achats', icon: ShoppingCart, group: 'Transactions' },
   { key: 'purchase-returns', label: 'Retours Achats', icon: Undo2, group: 'Transactions' },
-  { key: 'sales', label: 'Liste des ventes', icon: TrendingUp, group: 'Transactions' },
+  { key: 'sales', label: 'Ventes', icon: TrendingUp, group: 'Transactions' },
   { key: 'sales-returns', label: 'Retours Ventes', icon: ArrowLeftRight, group: 'Transactions' },
-  { key: 'invoices', label: 'Liste des factures', icon: Receipt, group: 'Documents' },
+  { key: 'invoices', label: 'Factures', icon: Receipt, group: 'Documents' },
   { key: 'users', label: 'Utilisateurs', icon: UserCog, group: 'Administration', adminOnly: true },
   { key: 'settings', label: 'Paramètres', icon: Settings, group: 'Administration', adminOnly: true },
 ];
 
-const bottomNavKeys: PageKey[] = ['dashboard', 'products', 'sales', 'invoices'];
-const moreNavKeys: PageKey[] = ['suppliers', 'customers', 'purchases', 'purchase-returns', 'sales-returns'];
+const bottomNavKeys: PageKey[] = ['dashboard', 'products', 'sales', 'purchases'];
+const moreNavKeys: PageKey[] = ['suppliers', 'customers', 'purchase-returns', 'sales-returns', 'invoices'];
 
 interface LayoutProps {
   currentPage: PageKey;
