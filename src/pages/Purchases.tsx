@@ -1109,6 +1109,10 @@ export default function Purchases() {
                     Date
                   </th>
 
+                  <th className="text-right font-semibold text-slate-600 px-4 py-3 hidden xl:table-cell">
+                    Manutention
+                  </th>
+
                   <th className="text-right font-semibold text-slate-600 px-4 py-3">
                     Total
                   </th>
@@ -1150,6 +1154,10 @@ export default function Purchases() {
                       {formatDate(
                         p.purchase_date
                       )}
+                    </td>
+
+                    <td className="px-4 py-3 text-right hidden xl:table-cell text-slate-600">
+                      {p.handling_fee > 0 ? formatCurrency(p.handling_fee) : '—'}
                     </td>
 
                     <td className="px-4 py-3 text-right font-medium text-slate-800">
