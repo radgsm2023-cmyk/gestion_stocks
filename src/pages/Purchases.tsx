@@ -2170,14 +2170,49 @@ export default function Purchases() {
 
           {paymentModal && (
 
-            <div className="bg-amber-50 rounded-lg p-3 text-sm text-amber-700">
+            <div className="bg-slate-50 rounded-lg p-4 space-y-2 text-sm border border-slate-200">
 
-              Reste à payer :{' '}
+              <div className="flex items-center justify-between text-slate-600">
+                <span>Montant achat</span>
+                <span className="font-medium text-slate-700">
+                  {formatCurrency(
+                    paymentModal.total_amount - (paymentModal.handling_fee || 0)
+                  )}
+                </span>
+              </div>
 
-              {formatCurrency(
-                paymentModal.total_amount -
-                  paymentModal.paid_amount
+              {(paymentModal.handling_fee || 0) > 0 && (
+                <div className="flex items-center justify-between text-slate-600">
+                  <span>Manutention</span>
+                  <span className="font-medium text-slate-700">
+                    {formatCurrency(paymentModal.handling_fee)}
+                  </span>
+                </div>
               )}
+
+              <div className="flex items-center justify-between text-slate-600">
+                <span>Total</span>
+                <span className="font-semibold text-slate-800">
+                  {formatCurrency(paymentModal.total_amount)}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                <span className="text-slate-600">Payé</span>
+                <span className="font-medium text-slate-700">
+                  {formatCurrency(paymentModal.paid_amount)}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-amber-700">Reste à payer</span>
+                <span className="font-bold text-amber-700">
+                  {formatCurrency(
+                    paymentModal.total_amount -
+                      paymentModal.paid_amount
+                  )}
+                </span>
+              </div>
 
             </div>
 
