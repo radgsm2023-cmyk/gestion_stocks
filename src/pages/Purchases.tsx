@@ -899,17 +899,6 @@ export default function Purchases() {
 
         <div class="total">
 
-          ${order.purchase.handling_fee > 0 ? `
-            <div class="total-detail">
-              <span>Sous-total</span>
-              <span>${formatCurrency(order.total)}</span>
-            </div>
-            <div class="total-detail">
-              <span>Manutention</span>
-              <span>${formatCurrency(order.purchase.handling_fee)}</span>
-            </div>
-          ` : ''}
-
           <div class="total-box">
 
             <span>
@@ -918,7 +907,7 @@ export default function Purchases() {
 
             <span>
               ${formatCurrency(
-                order.total + (order.purchase.handling_fee || 0)
+                order.total
               )}
             </span>
 
@@ -1109,7 +1098,7 @@ export default function Purchases() {
                     Date
                   </th>
 
-                  <th className="text-right font-semibold text-slate-600 px-4 py-3 hidden xl:table-cell">
+                  <th className="text-right font-semibold text-slate-600 px-4 py-3 hidden lg:table-cell">
                     Manutention
                   </th>
 
@@ -1156,7 +1145,7 @@ export default function Purchases() {
                       )}
                     </td>
 
-                    <td className="px-4 py-3 text-right hidden xl:table-cell text-slate-600">
+                    <td className="px-4 py-3 text-right hidden lg:table-cell text-slate-600">
                       {p.handling_fee > 0 ? formatCurrency(p.handling_fee) : '—'}
                     </td>
 
@@ -2086,24 +2075,6 @@ export default function Purchases() {
 
               <div className="w-full sm:w-80 border-2 border-slate-800 rounded-xl overflow-hidden">
 
-                {purchaseOrderModal.purchase.handling_fee > 0 && (
-                  <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50">
-                    <span className="text-sm text-slate-600">Sous-total</span>
-                    <span className="text-sm font-medium text-slate-700">
-                      {formatCurrency(purchaseOrderModal.total)}
-                    </span>
-                  </div>
-                )}
-
-                {purchaseOrderModal.purchase.handling_fee > 0 && (
-                  <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50">
-                    <span className="text-sm text-slate-600">Manutention</span>
-                    <span className="text-sm font-medium text-slate-700">
-                      {formatCurrency(purchaseOrderModal.purchase.handling_fee)}
-                    </span>
-                  </div>
-                )}
-
                 <div className="flex items-center justify-between px-5 py-4">
 
                   <span className="font-bold text-slate-800">
@@ -2112,7 +2083,7 @@ export default function Purchases() {
 
                   <span className="text-xl font-bold text-slate-800">
                     {formatCurrency(
-                      purchaseOrderModal.total + (purchaseOrderModal.purchase.handling_fee || 0)
+                      purchaseOrderModal.total
                     )}
                   </span>
 
