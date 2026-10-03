@@ -46,6 +46,7 @@ export interface Purchase {
   status: string;
   total_amount: number;
   paid_amount: number;
+  handling_fee: number;
   purchase_date: string;
   notes: string;
   created_at: string;

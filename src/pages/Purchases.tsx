@@ -81,6 +81,7 @@ export default function Purchases() {
     purchase_date: new Date().toISOString().slice(0, 10),
     status: 'pending',
     notes: '',
+    handling_fee: '0',
   });
 
   const [items, setItems] = useState<ItemRow[]>([
@@ -159,6 +160,7 @@ export default function Purchases() {
       purchase_date: purchaseDate,
       status: 'pending',
       notes: '',
+      handling_fee: '0',
     });
 
     setItems([
@@ -216,13 +218,16 @@ export default function Purchases() {
     setItems(next);
   }
 
-  const totalAmount = items.reduce(
+  const itemsTotal = items.reduce(
     (sum, it) =>
       sum +
       (parseFloat(it.quantity) || 0) *
         (parseFloat(it.unit_price) || 0),
     0
   );
+
+  const handlingFee = parseFloat(form.handling_fee) || 0;
+  const totalAmount = itemsTotal + handlingFee;
 
   async function handleSave() {
     if (
@@ -259,6 +264,8 @@ export default function Purchases() {
             total_amount: totalAmount,
 
             paid_amount: 0,
+
+            handling_fee: handlingFee,
 
             purchase_date:
               form.purchase_date,
@@ -742,6 +749,15 @@ export default function Purchases() {
             font-weight: bold;
           }
 
+          .total-detail {
+            width: 300px;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #475569;
+          }
+
           .notes {
             margin-top: 30px;
             padding: 15px;
@@ -883,6 +899,17 @@ export default function Purchases() {
 
         <div class="total">
 
+          ${order.purchase.handling_fee > 0 ? `
+            <div class="total-detail">
+              <span>Sous-total</span>
+              <span>${formatCurrency(order.total)}</span>
+            </div>
+            <div class="total-detail">
+              <span>Manutention</span>
+              <span>${formatCurrency(order.purchase.handling_fee)}</span>
+            </div>
+          ` : ''}
+
           <div class="total-box">
 
             <span>
@@ -891,7 +918,7 @@ export default function Purchases() {
 
             <span>
               ${formatCurrency(
-                order.total
+                order.total + (order.purchase.handling_fee || 0)
               )}
             </span>
 
@@ -1272,6 +1299,19 @@ export default function Purchases() {
 
           </div>
 
+          <Input
+            label="Frais de manutention"
+            type="number"
+            step="0.01"
+            value={form.handling_fee}
+            onChange={(v) =>
+              setForm({
+                ...form,
+                handling_fee: v,
+              })
+            }
+          />
+
           <div>
 
             <div className="flex items-center justify-between mb-2">
@@ -1400,11 +1440,17 @@ export default function Purchases() {
 
             </div>
 
-            <div className="flex justify-end mt-3 text-lg font-bold text-slate-800">
-              Total :{' '}
-              {formatCurrency(
-                totalAmount
-              )}
+            <div className="flex justify-end mt-3 text-lg font-bold text-slate-800 flex-col items-end gap-1">
+              <div className="text-sm font-normal text-slate-500">
+                Sous-total : {formatCurrency(itemsTotal)}
+              </div>
+              <div className="text-sm font-normal text-slate-500">
+                Manutention : {formatCurrency(handlingFee)}
+              </div>
+              <div>
+                Total :{' '}
+                {formatCurrency(totalAmount)}
+              </div>
             </div>
 
           </div>
@@ -1529,6 +1575,13 @@ export default function Purchases() {
               </div>
 
             </div>
+
+            {detailPurchase.handling_fee > 0 && (
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-blue-700 flex items-center justify-between">
+                <span>Frais de manutention</span>
+                <span className="font-semibold">{formatCurrency(detailPurchase.handling_fee)}</span>
+              </div>
+            )}
 
             <div>
 
@@ -2025,6 +2078,24 @@ export default function Purchases() {
 
               <div className="w-full sm:w-80 border-2 border-slate-800 rounded-xl overflow-hidden">
 
+                {purchaseOrderModal.purchase.handling_fee > 0 && (
+                  <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50">
+                    <span className="text-sm text-slate-600">Sous-total</span>
+                    <span className="text-sm font-medium text-slate-700">
+                      {formatCurrency(purchaseOrderModal.total)}
+                    </span>
+                  </div>
+                )}
+
+                {purchaseOrderModal.purchase.handling_fee > 0 && (
+                  <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50">
+                    <span className="text-sm text-slate-600">Manutention</span>
+                    <span className="text-sm font-medium text-slate-700">
+                      {formatCurrency(purchaseOrderModal.purchase.handling_fee)}
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between px-5 py-4">
 
                   <span className="font-bold text-slate-800">
@@ -2033,7 +2104,7 @@ export default function Purchases() {
 
                   <span className="text-xl font-bold text-slate-800">
                     {formatCurrency(
-                      purchaseOrderModal.total
+                      purchaseOrderModal.total + (purchaseOrderModal.purchase.handling_fee || 0)
                     )}
                   </span>
 
