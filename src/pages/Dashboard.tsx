@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Package,
   ShoppingCart,
@@ -41,11 +41,13 @@ type DashboardStats = {
   purchaseTotal: number;
   purchasePaid: number;
   purchaseDebt: number;
+
+  // Frais
   handlingFeesTotal: number;
+  transportCostTotal: number;
 
   // Livraisons
   deliveriesCount: number;
-  transportCostTotal: number;
 
   // Clients / fournisseurs
   customerCount: number;
@@ -62,6 +64,41 @@ type DashboardStats = {
   partialInvoices: number;
 };
 
+const emptyStats: DashboardStats = {
+  productCount: 0,
+
+  totalStockValue: 0,
+  totalStockCost: 0,
+  lowStockCount: 0,
+  outOfStockCount: 0,
+
+  salesTotal: 0,
+  salesCost: 0,
+  salesProfit: 0,
+  salesPaid: 0,
+  salesReceivable: 0,
+
+  purchaseTotal: 0,
+  purchasePaid: 0,
+  purchaseDebt: 0,
+
+  handlingFeesTotal: 0,
+  transportCostTotal: 0,
+
+  deliveriesCount: 0,
+
+  customerCount: 0,
+  supplierCount: 0,
+
+  salesReturnTotal: 0,
+  purchaseReturnTotal: 0,
+  salesReturnCount: 0,
+  purchaseReturnCount: 0,
+
+  unpaidInvoices: 0,
+  partialInvoices: 0,
+};
+
 export default function Dashboard({
   onNavigate,
 }: {
@@ -69,38 +106,7 @@ export default function Dashboard({
 }) {
   const [loading, setLoading] = useState(true);
 
-  const [stats, setStats] = useState<DashboardStats>({
-    productCount: 0,
-
-    totalStockValue: 0,
-    totalStockCost: 0,
-    lowStockCount: 0,
-    outOfStockCount: 0,
-
-    salesTotal: 0,
-    salesCost: 0,
-    salesProfit: 0,
-    salesPaid: 0,
-    salesReceivable: 0,
-
-    purchaseTotal: 0,
-    purchasePaid: 0,
-    purchaseDebt: 0,
-
-    customerCount: 0,
-    supplierCount: 0,
-
-    salesReturnTotal: 0,
-    purchaseReturnTotal: 0,
-    salesReturnCount: 0,
-    purchaseReturnCount: 0,
-
-    unpaidInvoices: 0,
-    partialInvoices: 0,
-    handlingFeesTotal: 0,
-    deliveriesCount: 0,
-    transportCostTotal: 0,
-  });
+  const [stats, setStats] = useState<DashboardStats>(emptyStats);
 
   const [recentSales, setRecentSales] = useState<any[]>([]);
   const [lowStockProducts, setLowStockProducts] = useState<any[]>([]);
@@ -113,6 +119,17 @@ export default function Dashboard({
     setLoading(true);
 
     try {
+      /*
+       * ============================================================
+       * CHARGEMENT DES DONNÉES
+       * ============================================================
+       *
+       * Chaque requête est indépendante.
+       *
+       * Important :
+       * deliveriesRes est bien présent ici et dans le destructuring.
+       */
+
       const [
         productsRes,
         salesRes,
@@ -126,102 +143,139 @@ export default function Dashboard({
         suppliersRes,
         salesReturnsRes,
         purchaseReturnsRes,
+        deliveriesRes,
       ] = await Promise.all([
-        // Produits
+        // ----------------------------------------------------------
+        // PRODUITS
+        // ----------------------------------------------------------
         supabase
           .from('products')
           .select('*'),
 
-        // TOUTES les ventes
+        // ----------------------------------------------------------
+        // VENTES
+        // ----------------------------------------------------------
         supabase
           .from('sales')
           .select('*'),
 
-        // Seulement les dernières ventes pour l'affichage
+        // ----------------------------------------------------------
+        // VENTES RÉCENTES
+        // ----------------------------------------------------------
         supabase
           .from('sales')
           .select('*')
           .order('created_at', { ascending: false })
           .limit(5),
 
-        // Tous les achats
+        // ----------------------------------------------------------
+        // ACHATS
+        // ----------------------------------------------------------
         supabase
           .from('purchases')
           .select('*'),
 
-        // Lignes de vente
+        // ----------------------------------------------------------
+        // LIGNES DE VENTE
+        // ----------------------------------------------------------
         supabase
           .from('sale_items')
           .select('*'),
 
-        // Paiements fournisseurs
+        // ----------------------------------------------------------
+        // PAIEMENTS FOURNISSEURS
+        // ----------------------------------------------------------
         supabase
           .from('purchase_payments')
           .select('*'),
 
-        // Paiements clients
+        // ----------------------------------------------------------
+        // PAIEMENTS CLIENTS
+        // ----------------------------------------------------------
         supabase
           .from('sale_payments')
           .select('*'),
 
-        // Factures
+        // ----------------------------------------------------------
+        // FACTURES
+        // ----------------------------------------------------------
         supabase
           .from('invoices')
           .select('*'),
 
-        // Clients
+        // ----------------------------------------------------------
+        // CLIENTS
+        // ----------------------------------------------------------
         supabase
           .from('customers')
           .select('id'),
 
-        // Fournisseurs
+        // ----------------------------------------------------------
+        // FOURNISSEURS
+        // ----------------------------------------------------------
         supabase
           .from('suppliers')
           .select('id'),
 
-        // Retours ventes
+        // ----------------------------------------------------------
+        // RETOURS VENTES
+        // ----------------------------------------------------------
         supabase
           .from('sales_returns')
           .select('*'),
 
-        // Retours achats
+        // ----------------------------------------------------------
+        // RETOURS ACHATS
+        // ----------------------------------------------------------
         supabase
           .from('purchase_returns')
           .select('*'),
 
-        // Livraisons
+        // ----------------------------------------------------------
+        // LIVRAISONS
+        // ----------------------------------------------------------
         supabase
           .from('deliveries')
           .select('*'),
       ]);
 
-      // ---------------------------------------------------------
-      // Vérification des erreurs Supabase
-      // ---------------------------------------------------------
+      /*
+       * ============================================================
+       * AFFICHAGE DES ERREURS
+       * ============================================================
+       *
+       * Une erreur sur une table ne doit pas faire disparaître
+       * toutes les statistiques.
+       */
 
       const errors = [
-        productsRes.error,
-        salesRes.error,
-        recentSalesRes.error,
-        purchasesRes.error,
-        saleItemsRes.error,
-        purchasePaymentsRes.error,
-        salePaymentsRes.error,
-        invoicesRes.error,
-        customersRes.error,
-        suppliersRes.error,
-        salesReturnsRes.error,
-        purchaseReturnsRes.error,
-        deliveriesRes.error,
-      ].filter(Boolean);
+        ['products', productsRes.error],
+        ['sales', salesRes.error],
+        ['recentSales', recentSalesRes.error],
+        ['purchases', purchasesRes.error],
+        ['sale_items', saleItemsRes.error],
+        ['purchase_payments', purchasePaymentsRes.error],
+        ['sale_payments', salePaymentsRes.error],
+        ['invoices', invoicesRes.error],
+        ['customers', customersRes.error],
+        ['suppliers', suppliersRes.error],
+        ['sales_returns', salesReturnsRes.error],
+        ['purchase_returns', purchaseReturnsRes.error],
+        ['deliveries', deliveriesRes.error],
+      ].filter(([, error]) => Boolean(error));
 
       if (errors.length > 0) {
-        console.error('Erreur Dashboard Supabase:', errors);
+        console.error(
+          'Erreurs Supabase Dashboard:',
+          errors
+        );
       }
 
-      // ---------------------------------------------------------
-      // Données
-      // ---------------------------------------------------------
+      /*
+       * ============================================================
+       * DONNÉES
+       * ============================================================
+       */
 
       const products = productsRes.data || [];
       const sales = salesRes.data || [];
@@ -230,95 +284,156 @@ export default function Dashboard({
       const salePayments = salePaymentsRes.data || [];
       const purchasePayments = purchasePaymentsRes.data || [];
       const invoices = invoicesRes.data || [];
+      const customers = customersRes.data || [];
+      const suppliers = suppliersRes.data || [];
       const salesReturns = salesReturnsRes.data || [];
       const purchaseReturns = purchaseReturnsRes.data || [];
       const deliveries = deliveriesRes.data || [];
 
-      // ---------------------------------------------------------
-      // STOCK
-      // ---------------------------------------------------------
+      /*
+       * ============================================================
+       * STOCK
+       * ============================================================
+       */
 
       const totalStockValue = products.reduce(
-        (sum, product) =>
-          sum +
-          Number(product.sale_price || 0) *
-            Number(product.stock_quantity || 0),
+        (sum, product) => {
+          const salePrice = Number(
+            product.sale_price ?? 0
+          );
+
+          const quantity = Number(
+            product.stock_quantity ?? 0
+          );
+
+          return sum + salePrice * quantity;
+        },
         0
       );
 
       const totalStockCost = products.reduce(
-        (sum, product) =>
-          sum +
-          Number(product.cost_price || 0) *
-            Number(product.stock_quantity || 0),
+        (sum, product) => {
+          const costPrice = Number(
+            product.cost_price ?? 0
+          );
+
+          const quantity = Number(
+            product.stock_quantity ?? 0
+          );
+
+          return sum + costPrice * quantity;
+        },
         0
       );
 
-      const lowStock = products.filter(
-        (product) =>
-          Number(product.stock_quantity || 0) <=
-          Number(product.min_stock || 0)
-      );
+      const lowStock = products.filter((product) => {
+        const quantity = Number(
+          product.stock_quantity ?? 0
+        );
 
-      const outOfStock = products.filter(
-        (product) => Number(product.stock_quantity || 0) <= 0
-      );
+        const minimum = Number(
+          product.min_stock ?? 0
+        );
 
-      // ---------------------------------------------------------
-      // VENTES
-      // ---------------------------------------------------------
+        return quantity > 0 && quantity <= minimum;
+      });
 
-      const salesTotal = sales.reduce(
-        (sum, sale) => sum + Number(sale.total_amount || 0),
-        0
-      );
+      const outOfStock = products.filter((product) => {
+        const quantity = Number(
+          product.stock_quantity ?? 0
+        );
+
+        return quantity <= 0;
+      });
 
       /*
-       * Coût réel des produits vendus.
-       *
-       * sale_items contient :
-       * product_id
-       * quantity
-       * unit_price
-       * total
-       *
-       * Le prix d'achat est récupéré depuis products.
+       * ============================================================
+       * PRIX D'ACHAT DES PRODUITS
+       * ============================================================
        */
 
-      const productCostMap = new Map<string, number>();
+      const productCostMap = new Map<
+        string,
+        number
+      >();
 
       products.forEach((product) => {
         productCostMap.set(
-          product.id,
-          Number(product.cost_price || 0)
+          String(product.id),
+          Number(product.cost_price ?? 0)
         );
       });
 
-      const salesCost = saleItems.reduce((sum, item) => {
-        const costPrice =
-          productCostMap.get(item.product_id) || 0;
+      /*
+       * ============================================================
+       * VENTES
+       * ============================================================
+       */
 
-        const quantity = Number(item.quantity || 0);
-
-        return sum + quantity * costPrice;
-      }, 0);
-
-      const salesProfit = salesTotal - salesCost;
-
-      // ---------------------------------------------------------
-      // ENCAISSEMENTS CLIENTS
-      // ---------------------------------------------------------
-
-      const salesPaid = salePayments.reduce(
-        (sum, payment) =>
-          sum + Number(payment.amount || 0),
+      const salesTotal = sales.reduce(
+        (sum, sale) => {
+          return (
+            sum +
+            Number(sale.total_amount ?? 0)
+          );
+        },
         0
       );
 
       /*
-       * Créance calculée à partir des ventes :
+       * Coût des marchandises vendues.
        *
-       * CA total - paiements réellement encaissés
+       * sale_items :
+       * - product_id
+       * - quantity
+       *
+       * Le prix d'achat est récupéré dans products.
+       */
+
+      const salesCost = saleItems.reduce(
+        (sum, item) => {
+          const productId = String(
+            item.product_id ?? ''
+          );
+
+          const costPrice =
+            productCostMap.get(productId) ?? 0;
+
+          const quantity = Number(
+            item.quantity ?? 0
+          );
+
+          return (
+            sum +
+            quantity * costPrice
+          );
+        },
+        0
+      );
+
+      const salesProfit =
+        salesTotal - salesCost;
+
+      /*
+       * ============================================================
+       * PAIEMENTS CLIENTS
+       * ============================================================
+       */
+
+      const salesPaid = salePayments.reduce(
+        (sum, payment) => {
+          return (
+            sum +
+            Number(payment.amount ?? 0)
+          );
+        },
+        0
+      );
+
+      /*
+       * Créances clients.
+       *
+       * CA - paiements encaissés.
        */
 
       const salesReceivable = Math.max(
@@ -326,72 +441,173 @@ export default function Dashboard({
         salesTotal - salesPaid
       );
 
-      // ---------------------------------------------------------
-      // ACHATS FOURNISSEURS
-      // ---------------------------------------------------------
+      /*
+       * ============================================================
+       * ACHATS
+       * ============================================================
+       */
 
       const purchaseTotal = purchases.reduce(
-        (sum, purchase) =>
-          sum + Number(purchase.total_amount || 0),
+        (sum, purchase) => {
+          return (
+            sum +
+            Number(
+              purchase.total_amount ?? 0
+            )
+          );
+        },
         0
       );
 
-      const purchasePaid = purchasePayments.reduce(
-        (sum, payment) =>
-          sum + Number(payment.amount || 0),
-        0
-      );
+      /*
+       * Paiements fournisseurs.
+       */
+
+      const purchasePaid =
+        purchasePayments.reduce(
+          (sum, payment) => {
+            return (
+              sum +
+              Number(payment.amount ?? 0)
+            );
+          },
+          0
+        );
+
+      /*
+       * Dette fournisseurs.
+       */
 
       const purchaseDebt = Math.max(
         0,
         purchaseTotal - purchasePaid
       );
 
-      const handlingFeesTotal = purchases.reduce(
-        (sum, p) => sum + Number(p.handling_fee || 0),
-        0
-      );
+      /*
+       * ============================================================
+       * FRAIS DE MANUTENTION
+       * ============================================================
+       */
 
-      const deliveriesCount = deliveries.length;
+      const handlingFeesTotal =
+        purchases.reduce(
+          (sum, purchase) => {
+            return (
+              sum +
+              Number(
+                purchase.handling_fee ?? 0
+              )
+            );
+          },
+          0
+        );
 
-      const transportCostTotal = deliveries.reduce(
-        (sum, d) => sum + Number(d.transport_cost || 0),
-        0
-      );
+      /*
+       * ============================================================
+       * LIVRAISONS
+       * ============================================================
+       */
 
-      // ---------------------------------------------------------
-      // FACTURES
-      // ---------------------------------------------------------
+      const deliveriesCount =
+        deliveries.length;
 
-      const unpaidInvoices = invoices.filter(
-        (invoice) =>
-          invoice.status === 'unpaid'
-      ).length;
+      const transportCostTotal =
+        deliveries.reduce(
+          (sum, delivery) => {
+            return (
+              sum +
+              Number(
+                delivery.transport_cost ?? 0
+              )
+            );
+          },
+          0
+        );
 
-      const partialInvoices = invoices.filter(
-        (invoice) =>
-          invoice.status === 'partial'
-      ).length;
+      /*
+       * ============================================================
+       * FACTURES
+       * ============================================================
+       */
 
-      // ---------------------------------------------------------
-      // RETOURS
-      // ---------------------------------------------------------
+      const unpaidInvoices =
+        invoices.filter(
+          (invoice) =>
+            String(
+              invoice.status ?? ''
+            ).toLowerCase() === 'unpaid'
+        ).length;
 
-      const salesReturnTotal = salesReturns.reduce(
-        (sum, item) =>
-          sum + Number(item.total_amount || 0),
-        0
-      );
+      const partialInvoices =
+        invoices.filter(
+          (invoice) =>
+            String(
+              invoice.status ?? ''
+            ).toLowerCase() === 'partial'
+        ).length;
 
-      const purchaseReturnTotal = purchaseReturns.reduce(
-        (sum, item) =>
-          sum + Number(item.total_amount || 0),
-        0
-      );
+      /*
+       * ============================================================
+       * RETOURS VENTES
+       * ============================================================
+       */
 
-      // ---------------------------------------------------------
-      // STATS
-      // ---------------------------------------------------------
+      const salesReturnTotal =
+        salesReturns.reduce(
+          (sum, item) => {
+            return (
+              sum +
+              Number(
+                item.total_amount ?? 0
+              )
+            );
+          },
+          0
+        );
+
+      /*
+       * ============================================================
+       * RETOURS ACHATS
+       * ============================================================
+       */
+
+      const purchaseReturnTotal =
+        purchaseReturns.reduce(
+          (sum, item) => {
+            return (
+              sum +
+              Number(
+                item.total_amount ?? 0
+              )
+            );
+          },
+          0
+        );
+
+      /*
+       * ============================================================
+       * BÉNÉFICE NET
+       * ============================================================
+       *
+       * Bénéfice commercial
+       * - frais de manutention
+       * - frais de livraison
+       *
+       * Les retours ne sont pas automatiquement déduits ici
+       * car leur impact dépend de la manière dont les retours
+       * sont enregistrés dans les ventes.
+       */
+
+      const netProfit =
+        salesProfit -
+        handlingFeesTotal -
+        transportCostTotal;
+
+      /*
+       * ============================================================
+       * MISE À JOUR DES STATISTIQUES
+       * ============================================================
+       */
 
       setStats({
         productCount: products.length,
@@ -411,52 +627,121 @@ export default function Dashboard({
         purchasePaid,
         purchaseDebt,
 
-        customerCount: customersRes.data?.length || 0,
-        supplierCount: suppliersRes.data?.length || 0,
+        handlingFeesTotal,
+        transportCostTotal,
+
+        deliveriesCount,
+
+        customerCount: customers.length,
+        supplierCount: suppliers.length,
 
         salesReturnTotal,
         purchaseReturnTotal,
-        salesReturnCount: salesReturns.length,
-        purchaseReturnCount: purchaseReturns.length,
+        salesReturnCount:
+          salesReturns.length,
+        purchaseReturnCount:
+          purchaseReturns.length,
 
         unpaidInvoices,
         partialInvoices,
-        handlingFeesTotal,
-        deliveriesCount,
-        transportCostTotal,
       });
 
-      setRecentSales(recentSalesRes.data || []);
+      /*
+       * ============================================================
+       * VENTES RÉCENTES
+       * ============================================================
+       */
 
-      setLowStockProducts(
-        lowStock
+      setRecentSales(
+        recentSalesRes.data || []
+      );
+
+      /*
+       * ============================================================
+       * STOCK FAIBLE
+       * ============================================================
+       */
+
+      const sortedLowStock =
+        [...lowStock]
           .sort(
             (a, b) =>
-              Number(a.stock_quantity || 0) -
-              Number(b.stock_quantity || 0)
+              Number(
+                a.stock_quantity ?? 0
+              ) -
+              Number(
+                b.stock_quantity ?? 0
+              )
           )
-          .slice(0, 5)
+          .slice(0, 5);
+
+      setLowStockProducts(
+        sortedLowStock
+      );
+
+      /*
+       * ============================================================
+       * LOG UTILE POUR LE DÉBOGAGE
+       * ============================================================
+       */
+
+      console.log(
+        'Dashboard chargé:',
+        {
+          produits: products.length,
+          ventes: sales.length,
+          achats: purchases.length,
+          clients: customers.length,
+          fournisseurs: suppliers.length,
+          livraisons: deliveries.length,
+          retoursVentes:
+            salesReturns.length,
+          retoursAchats:
+            purchaseReturns.length,
+        }
       );
     } catch (error) {
       console.error(
         'Erreur lors du chargement du Dashboard:',
         error
       );
+
+      /*
+       * On garde les valeurs déjà disponibles
+       * au lieu de casser complètement le Dashboard.
+       */
     } finally {
       setLoading(false);
     }
   }
 
+  /*
+   * ==============================================================
+   * CHARGEMENT
+   * ==============================================================
+   */
+
   if (loading) {
     return <Loading />;
   }
 
+  const netProfit =
+    stats.salesProfit -
+    stats.handlingFeesTotal -
+    stats.transportCostTotal;
+
+  /*
+   * ==============================================================
+   * AFFICHAGE
+   * ==============================================================
+   */
+
   return (
     <div className="space-y-6 animate-fade-in-up">
 
-      {/* =====================================================
+      {/* ==========================================================
           TITRE
-      ====================================================== */}
+      =========================================================== */}
 
       <div>
         <h1 className="text-2xl font-bold text-slate-800">
@@ -468,100 +753,120 @@ export default function Dashboard({
         </p>
       </div>
 
-      {/* =====================================================
-          PREMIÈRE LIGNE — ACTIVITÉ COMMERCIALE
-      ====================================================== */}
+      {/* ==========================================================
+          ACTIVITÉ COMMERCIALE
+      =========================================================== */}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
         <StatCard
           label="CA des ventes"
-          value={formatCurrency(stats.salesTotal)}
+          value={formatCurrency(
+            stats.salesTotal
+          )}
           icon={TrendingUp}
           color="#059669"
         />
 
         <StatCard
-          label="Bénéfice"
-          value={formatCurrency(stats.salesProfit)}
+          label="Bénéfice commercial"
+          value={formatCurrency(
+            stats.salesProfit
+          )}
           icon={TrendingUp}
           color="#2563eb"
         />
 
         <StatCard
           label="Total encaissé"
-          value={formatCurrency(stats.salesPaid)}
+          value={formatCurrency(
+            stats.salesPaid
+          )}
           icon={Wallet}
           color="#0891b2"
         />
 
         <StatCard
           label="Créances clients"
-          value={formatCurrency(stats.salesReceivable)}
+          value={formatCurrency(
+            stats.salesReceivable
+          )}
           icon={CreditCard}
           color="#dc2626"
         />
 
       </div>
 
-      {/* =====================================================
-          DEUXIÈME LIGNE — STOCK / FOURNISSEURS
-      ====================================================== */}
+      {/* ==========================================================
+          STOCK / ACHATS
+      =========================================================== */}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
         <StatCard
           label="Valeur du stock"
-          value={formatCurrency(stats.totalStockValue)}
+          value={formatCurrency(
+            stats.totalStockValue
+          )}
           icon={Package}
           color="#7c3aed"
         />
 
         <StatCard
           label="Total des achats"
-          value={formatCurrency(stats.purchaseTotal)}
+          value={formatCurrency(
+            stats.purchaseTotal
+          )}
           icon={ShoppingCart}
           color="#d97706"
         />
 
         <StatCard
           label="Fournisseurs payé"
-          value={formatCurrency(stats.purchasePaid)}
+          value={formatCurrency(
+            stats.purchasePaid
+          )}
           icon={Wallet}
           color="#059669"
         />
 
         <StatCard
           label="Dette fournisseurs"
-          value={formatCurrency(stats.purchaseDebt)}
+          value={formatCurrency(
+            stats.purchaseDebt
+          )}
           icon={Truck}
           color="#dc2626"
         />
 
       </div>
 
-      {/* =====================================================
-          TROISIÈME LIGNE — FRAIS SUPPLÉMENTAIRES
-      ====================================================== */}
+      {/* ==========================================================
+          FRAIS / LIVRAISONS
+      =========================================================== */}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
         <StatCard
           label="Frais de manutention"
-          value={formatCurrency(stats.handlingFeesTotal)}
+          value={formatCurrency(
+            stats.handlingFeesTotal
+          )}
           icon={Package}
           color="#d97706"
         />
 
         <StatCard
           label="Frais de livraison"
-          value={formatCurrency(stats.transportCostTotal)}
+          value={formatCurrency(
+            stats.transportCostTotal
+          )}
           icon={Send}
           color="#0891b2"
         />
 
         <StatCard
-          label="Nb livraisons"
+          label="Nombre de livraisons"
           value={stats.deliveriesCount}
           icon={Truck}
           color="#2563eb"
@@ -569,21 +874,24 @@ export default function Dashboard({
 
         <StatCard
           label="Bénéfice net"
-          value={formatCurrency(stats.salesProfit - stats.handlingFeesTotal - stats.transportCostTotal)}
+          value={formatCurrency(
+            netProfit
+          )}
           icon={TrendingUp}
           color="#059669"
         />
 
       </div>
 
-      {/* =====================================================
-          TROISIÈME LIGNE — INFORMATIONS
-      ====================================================== */}
+      {/* ==========================================================
+          INFORMATIONS GÉNÉRALES
+      =========================================================== */}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 
         <Card className="p-5">
           <div className="flex items-center gap-3">
+
             <Package className="w-5 h-5 text-blue-600" />
 
             <div>
@@ -595,11 +903,13 @@ export default function Dashboard({
                 {stats.productCount}
               </p>
             </div>
+
           </div>
         </Card>
 
         <Card className="p-5">
           <div className="flex items-center gap-3">
+
             <Users className="w-5 h-5 text-indigo-600" />
 
             <div>
@@ -611,11 +921,13 @@ export default function Dashboard({
                 {stats.customerCount}
               </p>
             </div>
+
           </div>
         </Card>
 
         <Card className="p-5">
           <div className="flex items-center gap-3">
+
             <Truck className="w-5 h-5 text-orange-600" />
 
             <div>
@@ -627,11 +939,13 @@ export default function Dashboard({
                 {stats.supplierCount}
               </p>
             </div>
+
           </div>
         </Card>
 
         <Card className="p-5">
           <div className="flex items-center gap-3">
+
             <AlertTriangle className="w-5 h-5 text-amber-500" />
 
             <div>
@@ -643,20 +957,21 @@ export default function Dashboard({
                 {stats.lowStockCount}
               </p>
             </div>
+
           </div>
         </Card>
 
       </div>
 
-      {/* =====================================================
-          VENTES + STOCK FAIBLE
-      ====================================================== */}
+      {/* ==========================================================
+          VENTES RÉCENTES + STOCK FAIBLE
+      =========================================================== */}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* -------------------------------------------------
+        {/* --------------------------------------------------------
             VENTES RÉCENTES
-        -------------------------------------------------- */}
+        --------------------------------------------------------- */}
 
         <div className="lg:col-span-2">
 
@@ -676,7 +991,9 @@ export default function Dashboard({
 
               <button
                 className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                onClick={() => onNavigate('sales')}
+                onClick={() =>
+                  onNavigate('sales')
+                }
               >
                 Voir tout →
               </button>
@@ -696,13 +1013,28 @@ export default function Dashboard({
                 {recentSales.map((sale) => {
 
                   const total =
-                    Number(sale.total_amount || 0);
+                    Number(
+                      sale.total_amount ?? 0
+                    );
+
+                  /*
+                   * paid_amount peut être présent
+                   * directement sur sales.
+                   *
+                   * S'il n'est pas présent,
+                   * on affiche 0 ici.
+                   */
 
                   const paid =
-                    Number(sale.paid_amount || 0);
+                    Number(
+                      sale.paid_amount ?? 0
+                    );
 
                   const remaining =
-                    Math.max(0, total - paid);
+                    Math.max(
+                      0,
+                      total - paid
+                    );
 
                   return (
                     <div
@@ -712,29 +1044,50 @@ export default function Dashboard({
 
                       <div>
                         <p className="font-medium text-slate-700 text-sm">
-                          {sale.reference}
+                          {sale.reference ||
+                            sale.id}
                         </p>
 
                         <p className="text-xs text-slate-400">
-                          {new Date(
-                            sale.sale_date
-                          ).toLocaleDateString('fr-FR')}
+                          {sale.sale_date
+                            ? new Date(
+                                sale.sale_date
+                              ).toLocaleDateString(
+                                'fr-FR'
+                              )
+                            : sale.created_at
+                            ? new Date(
+                                sale.created_at
+                              ).toLocaleDateString(
+                                'fr-FR'
+                              )
+                            : '-'}
                         </p>
                       </div>
 
                       <div className="text-right">
 
                         <p className="font-semibold text-slate-700 text-sm">
-                          {formatCurrency(total)}
+                          {formatCurrency(
+                            total
+                          )}
                         </p>
 
-                        <p className="text-xs text-emerald-600">
-                          Payé : {formatCurrency(paid)}
-                        </p>
+                        {paid > 0 && (
+                          <p className="text-xs text-emerald-600">
+                            Payé :{' '}
+                            {formatCurrency(
+                              paid
+                            )}
+                          </p>
+                        )}
 
                         {remaining > 0 && (
                           <p className="text-xs text-red-500">
-                            Reste : {formatCurrency(remaining)}
+                            Reste :{' '}
+                            {formatCurrency(
+                              remaining
+                            )}
                           </p>
                         )}
 
@@ -751,9 +1104,9 @@ export default function Dashboard({
 
         </div>
 
-        {/* -------------------------------------------------
+        {/* --------------------------------------------------------
             STOCK FAIBLE
-        -------------------------------------------------- */}
+        --------------------------------------------------------- */}
 
         <Card className="p-6">
 
@@ -783,55 +1136,58 @@ export default function Dashboard({
 
             <div className="space-y-2">
 
-              {lowStockProducts.map((product) => (
+              {lowStockProducts.map(
+                (product) => (
 
-                <div
-                  key={product.id}
-                  className="flex items-center justify-between py-3 px-4 rounded-lg bg-amber-50 border border-amber-100"
-                >
+                  <div
+                    key={product.id}
+                    className="flex items-center justify-between py-3 px-4 rounded-lg bg-amber-50 border border-amber-100"
+                  >
 
-                  <div className="min-w-0">
+                    <div className="min-w-0">
 
-                    <p className="font-medium text-slate-700 text-sm truncate">
-                      {product.name}
-                    </p>
+                      <p className="font-medium text-slate-700 text-sm truncate">
+                        {product.name}
+                      </p>
 
-                    <p className="text-xs text-slate-400">
-                      Minimum : {product.min_stock}
-                    </p>
+                      <p className="text-xs text-slate-400">
+                        Minimum :{' '}
+                        {product.min_stock ?? 0}
+                      </p>
+
+                    </div>
+
+                    <span className="text-sm font-bold text-amber-600 shrink-0 ml-2">
+                      {product.stock_quantity ??
+                        0}{' '}
+                      {product.unit || ''}
+                    </span>
 
                   </div>
-
-                  <span className="text-sm font-bold text-amber-600 shrink-0 ml-2">
-                    {product.stock_quantity} {product.unit}
-                  </span>
-
-                </div>
-
-              ))}
+                )
+              )}
 
             </div>
-
           )}
 
           {stats.lowStockCount > 0 && (
-
             <button
               className="w-full mt-4 text-sm text-blue-600 hover:text-blue-700 font-medium"
-              onClick={() => onNavigate('products')}
+              onClick={() =>
+                onNavigate('products')
+              }
             >
               Gérer les produits →
             </button>
-
           )}
 
         </Card>
 
       </div>
 
-      {/* =====================================================
+      {/* ==========================================================
           RÉSUMÉ FINANCIER
-      ====================================================== */}
+      =========================================================== */}
 
       <Card className="p-6">
 
@@ -849,9 +1205,9 @@ export default function Dashboard({
 
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
-          {/* Bénéfice */}
+          {/* BÉNÉFICE */}
 
           <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
 
@@ -860,18 +1216,42 @@ export default function Dashboard({
               <TrendingUp className="w-5 h-5 text-emerald-600" />
 
               <span className="text-sm font-medium text-slate-600">
-                Bénéfice des ventes
+                Bénéfice commercial
               </span>
 
             </div>
 
             <p className="text-xl font-bold text-emerald-700">
-              {formatCurrency(stats.salesProfit)}
+              {formatCurrency(
+                stats.salesProfit
+              )}
             </p>
 
           </div>
 
-          {/* Créances */}
+          {/* BÉNÉFICE NET */}
+
+          <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
+
+            <div className="flex items-center gap-2 mb-2">
+
+              <TrendingUp className="w-5 h-5 text-blue-600" />
+
+              <span className="text-sm font-medium text-slate-600">
+                Bénéfice net
+              </span>
+
+            </div>
+
+            <p className="text-xl font-bold text-blue-700">
+              {formatCurrency(
+                netProfit
+              )}
+            </p>
+
+          </div>
+
+          {/* CRÉANCES */}
 
           <div className="p-4 rounded-xl bg-red-50 border border-red-100">
 
@@ -886,12 +1266,14 @@ export default function Dashboard({
             </div>
 
             <p className="text-xl font-bold text-red-700">
-              {formatCurrency(stats.salesReceivable)}
+              {formatCurrency(
+                stats.salesReceivable
+              )}
             </p>
 
           </div>
 
-          {/* Fournisseurs */}
+          {/* DETTES */}
 
           <div className="p-4 rounded-xl bg-orange-50 border border-orange-100">
 
@@ -906,7 +1288,9 @@ export default function Dashboard({
             </div>
 
             <p className="text-xl font-bold text-orange-700">
-              {formatCurrency(stats.purchaseDebt)}
+              {formatCurrency(
+                stats.purchaseDebt
+              )}
             </p>
 
           </div>
@@ -915,11 +1299,13 @@ export default function Dashboard({
 
       </Card>
 
-      {/* =====================================================
+      {/* ==========================================================
           RETOURS
-      ====================================================== */}
+      =========================================================== */}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        {/* RETOURS VENTES */}
 
         <Card className="p-5">
 
@@ -936,7 +1322,8 @@ export default function Dashboard({
                 </p>
 
                 <p className="text-xs text-slate-400">
-                  {stats.salesReturnCount} retour(s)
+                  {stats.salesReturnCount}{' '}
+                  retour(s)
                 </p>
 
               </div>
@@ -944,12 +1331,16 @@ export default function Dashboard({
             </div>
 
             <p className="font-bold text-purple-700">
-              {formatCurrency(stats.salesReturnTotal)}
+              {formatCurrency(
+                stats.salesReturnTotal
+              )}
             </p>
 
           </div>
 
         </Card>
+
+        {/* RETOURS ACHATS */}
 
         <Card className="p-5">
 
@@ -966,7 +1357,8 @@ export default function Dashboard({
                 </p>
 
                 <p className="text-xs text-slate-400">
-                  {stats.purchaseReturnCount} retour(s)
+                  {stats.purchaseReturnCount}{' '}
+                  retour(s)
                 </p>
 
               </div>
@@ -974,7 +1366,9 @@ export default function Dashboard({
             </div>
 
             <p className="font-bold text-cyan-700">
-              {formatCurrency(stats.purchaseReturnTotal)}
+              {formatCurrency(
+                stats.purchaseReturnTotal
+              )}
             </p>
 
           </div>
@@ -983,9 +1377,9 @@ export default function Dashboard({
 
       </div>
 
-      {/* =====================================================
+      {/* ==========================================================
           FACTURES
-      ====================================================== */}
+      =========================================================== */}
 
       <Card className="p-6">
 
@@ -1001,6 +1395,8 @@ export default function Dashboard({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
+          {/* IMPAYÉES */}
+
           <div className="p-4 rounded-lg bg-red-50 border border-red-100">
 
             <p className="text-sm text-slate-500">
@@ -1012,6 +1408,8 @@ export default function Dashboard({
             </p>
 
           </div>
+
+          {/* PARTIELLES */}
 
           <div className="p-4 rounded-lg bg-amber-50 border border-amber-100">
 
@@ -1029,9 +1427,9 @@ export default function Dashboard({
 
       </Card>
 
-      {/* =====================================================
+      {/* ==========================================================
           STOCK À ZÉRO
-      ====================================================== */}
+      =========================================================== */}
 
       {stats.outOfStockCount > 0 && (
 
@@ -1050,7 +1448,8 @@ export default function Dashboard({
                 </p>
 
                 <p className="text-sm text-red-600">
-                  {stats.outOfStockCount} produit(s) avec un stock nul
+                  {stats.outOfStockCount}{' '}
+                  produit(s) avec un stock nul
                 </p>
 
               </div>
@@ -1059,7 +1458,9 @@ export default function Dashboard({
 
             <button
               className="text-sm font-medium text-red-700 hover:text-red-800"
-              onClick={() => onNavigate('products')}
+              onClick={() =>
+                onNavigate('products')
+              }
             >
               Voir les produits →
             </button>
