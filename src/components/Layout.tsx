@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Package,
   Truck,
+  Send,
   Users,
   ShoppingCart,
   ArrowLeftRight,
@@ -38,12 +39,13 @@ const navItems: NavItem[] = [
   { key: 'purchase-returns', label: 'Retours Achats', icon: Undo2, group: 'Transactions' },
   { key: 'sales', label: 'Ventes', icon: TrendingUp, group: 'Transactions' },
   { key: 'sales-returns', label: 'Retours Ventes', icon: ArrowLeftRight, group: 'Transactions' },
+  { key: 'deliveries', label: 'Livraisons', icon: Send, group: 'Transactions' },
   { key: 'users', label: 'Utilisateurs', icon: UserCog, group: 'Administration', adminOnly: true },
   { key: 'settings', label: 'Paramètres', icon: Settings, group: 'Administration', adminOnly: true },
 ];
 
 const bottomNavKeys: PageKey[] = ['dashboard', 'products', 'sales', 'purchases'];
-const moreNavKeys: PageKey[] = ['suppliers', 'customers', 'purchase-returns', 'sales-returns'];
+const moreNavKeys: PageKey[] = ['suppliers', 'customers', 'purchase-returns', 'sales-returns', 'deliveries'];
 
 interface LayoutProps {
   currentPage: PageKey;

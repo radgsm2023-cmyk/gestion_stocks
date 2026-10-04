@@ -179,6 +179,20 @@ export interface PurchaseOrderItem {
   product?: Product | null;
 }
 
+export interface Delivery {
+  id: string;
+  sale_id: string | null;
+  reference: string;
+  method: 'interne' | 'externe';
+  vehicle: string;
+  transport_cost: number;
+  delivery_date: string;
+  status: string;
+  notes: string;
+  created_at: string;
+  sale?: Sale | null;
+}
+
 export interface DeliveryNote {
   id: string;
   customer_id: string | null;
@@ -251,5 +265,6 @@ export type PageKey =
   | 'purchase-returns'
   | 'sales'
   | 'sales-returns'
+  | 'deliveries'
   | 'users'
   | 'settings';

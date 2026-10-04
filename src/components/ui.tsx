@@ -65,6 +65,7 @@ const statusMap: Record<string, string> = {
   unpaid: 'error',
   partial: 'warning',
   paid: 'success',
+  in_transit: 'info',
 };
 
 export function Badge({ status, variant }: BadgeProps) {
@@ -79,6 +80,7 @@ export function Badge({ status, variant }: BadgeProps) {
     unpaid: 'Impayé',
     partial: 'Partiel',
     paid: 'Payé',
+    in_transit: 'En cours',
   };
   return (
     <span

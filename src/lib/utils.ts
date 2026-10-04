@@ -62,6 +62,10 @@ export function generateFTRef(seq: number): string {
   return `FACT-${seqNum(seq)}-${dateStamp()}`;
 }
 
+export function generateLIVRef(seq: number): string {
+  return `LIV-${seqNum(seq)}-${dateStamp()}`;
+}
+
 import { supabase } from '@/lib/supabase';
 
 export async function getNextSeq(table: string): Promise<number> {
