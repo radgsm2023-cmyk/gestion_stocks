@@ -1099,6 +1099,10 @@ export default function Purchases() {
                   </th>
 
                   <th className="text-right font-semibold text-slate-600 px-4 py-3 hidden lg:table-cell">
+                    Achat
+                  </th>
+
+                  <th className="text-right font-semibold text-slate-600 px-4 py-3 hidden lg:table-cell">
                     Manutention
                   </th>
 
@@ -1143,6 +1147,10 @@ export default function Purchases() {
                       {formatDate(
                         p.purchase_date
                       )}
+                    </td>
+
+                    <td className="px-4 py-3 text-right hidden lg:table-cell text-slate-600">
+                      {formatCurrency(p.total_amount - (p.handling_fee || 0))}
                     </td>
 
                     <td className="px-4 py-3 text-right hidden lg:table-cell text-slate-600">
