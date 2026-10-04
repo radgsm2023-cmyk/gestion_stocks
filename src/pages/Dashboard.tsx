@@ -12,6 +12,7 @@ import {
   CreditCard,
   Users,
   Truck,
+  Send,
 } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
@@ -40,6 +41,11 @@ type DashboardStats = {
   purchaseTotal: number;
   purchasePaid: number;
   purchaseDebt: number;
+  handlingFeesTotal: number;
+
+  // Livraisons
+  deliveriesCount: number;
+  transportCostTotal: number;
 
   // Clients / fournisseurs
   customerCount: number;
@@ -91,6 +97,9 @@ export default function Dashboard({
 
     unpaidInvoices: 0,
     partialInvoices: 0,
+    handlingFeesTotal: 0,
+    deliveriesCount: 0,
+    transportCostTotal: 0,
   });
 
   const [recentSales, setRecentSales] = useState<any[]>([]);
@@ -179,6 +188,11 @@ export default function Dashboard({
         supabase
           .from('purchase_returns')
           .select('*'),
+
+        // Livraisons
+        supabase
+          .from('deliveries')
+          .select('*'),
       ]);
 
       // ---------------------------------------------------------
@@ -198,6 +212,7 @@ export default function Dashboard({
         suppliersRes.error,
         salesReturnsRes.error,
         purchaseReturnsRes.error,
+        deliveriesRes.error,
       ].filter(Boolean);
 
       if (errors.length > 0) {
@@ -217,6 +232,7 @@ export default function Dashboard({
       const invoices = invoicesRes.data || [];
       const salesReturns = salesReturnsRes.data || [];
       const purchaseReturns = purchaseReturnsRes.data || [];
+      const deliveries = deliveriesRes.data || [];
 
       // ---------------------------------------------------------
       // STOCK
@@ -331,6 +347,18 @@ export default function Dashboard({
         purchaseTotal - purchasePaid
       );
 
+      const handlingFeesTotal = purchases.reduce(
+        (sum, p) => sum + Number(p.handling_fee || 0),
+        0
+      );
+
+      const deliveriesCount = deliveries.length;
+
+      const transportCostTotal = deliveries.reduce(
+        (sum, d) => sum + Number(d.transport_cost || 0),
+        0
+      );
+
       // ---------------------------------------------------------
       // FACTURES
       // ---------------------------------------------------------
@@ -393,6 +421,9 @@ export default function Dashboard({
 
         unpaidInvoices,
         partialInvoices,
+        handlingFeesTotal,
+        deliveriesCount,
+        transportCostTotal,
       });
 
       setRecentSales(recentSalesRes.data || []);
@@ -505,6 +536,42 @@ export default function Dashboard({
           value={formatCurrency(stats.purchaseDebt)}
           icon={Truck}
           color="#dc2626"
+        />
+
+      </div>
+
+      {/* =====================================================
+          TROISIÈME LIGNE — FRAIS SUPPLÉMENTAIRES
+      ====================================================== */}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <StatCard
+          label="Frais de manutention"
+          value={formatCurrency(stats.handlingFeesTotal)}
+          icon={Package}
+          color="#d97706"
+        />
+
+        <StatCard
+          label="Frais de livraison"
+          value={formatCurrency(stats.transportCostTotal)}
+          icon={Send}
+          color="#0891b2"
+        />
+
+        <StatCard
+          label="Nb livraisons"
+          value={stats.deliveriesCount}
+          icon={Truck}
+          color="#2563eb"
+        />
+
+        <StatCard
+          label="Bénéfice net"
+          value={formatCurrency(stats.salesProfit - stats.handlingFeesTotal - stats.transportCostTotal)}
+          icon={TrendingUp}
+          color="#059669"
         />
 
       </div>
