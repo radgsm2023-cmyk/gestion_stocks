@@ -136,7 +136,15 @@ export default function Deliveries() {
   }
 
   async function handleSave() {
-    if (!form.reference.trim()) return;
+    if (
+      !form.reference.trim() ||
+      !form.sale_id ||
+      !form.method ||
+      !form.vehicle.trim() ||
+      !form.transport_cost ||
+      !form.delivery_date ||
+      !form.status
+    ) return;
 
     setSaving(true);
     try {
@@ -435,6 +443,7 @@ export default function Deliveries() {
                 label: `${s.reference} — ${s.customer?.name || s.customer_name || 'Client'}`,
               }))}
               placeholder="Sélectionner une vente..."
+              required
             />
             <Input
               label="Référence"
@@ -453,12 +462,14 @@ export default function Deliveries() {
                 { value: 'interne', label: 'Interne' },
                 { value: 'externe', label: 'Externe (Transporteur)' },
               ]}
+              required
             />
             <Input
               label="Immatriculation"
               value={form.vehicle}
               onChange={(v) => setForm({ ...form, vehicle: v })}
               placeholder="Ex: 123456-A-7"
+              required
             />
           </div>
 
@@ -469,12 +480,14 @@ export default function Deliveries() {
               step="0.01"
               value={form.transport_cost}
               onChange={(v) => setForm({ ...form, transport_cost: v })}
+              required
             />
             <Input
               label="Date de livraison"
               type="date"
               value={form.delivery_date}
               onChange={(v) => setForm({ ...form, delivery_date: v })}
+              required
             />
             <Select
               label="Statut"
@@ -486,6 +499,7 @@ export default function Deliveries() {
                 { value: 'delivered', label: 'Livré' },
                 { value: 'cancelled', label: 'Annulé' },
               ]}
+              required
             />
           </div>
 
