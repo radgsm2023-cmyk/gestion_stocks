@@ -249,7 +249,9 @@ export interface AppSettings {
   company_name: string;
   company_address: string;
   company_phone: string;
+  company_phone2: string;
   company_email: string;
+  company_logo: string;
   rc: string;
   nif: string;
   ai: string;

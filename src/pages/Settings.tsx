@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Save, Building2, Receipt } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Settings as SettingsIcon, Save, Building2, Receipt, Upload, X, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import type { AppSettings } from '@/types';
@@ -15,7 +15,9 @@ const emptySettings: AppSettings = {
   company_name: '',
   company_address: '',
   company_phone: '',
+  company_phone2: '',
   company_email: '',
+  company_logo: '',
   rc: '',
   nif: '',
   ai: '',
@@ -29,6 +31,8 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(!settings);
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (settings) {
@@ -48,6 +52,41 @@ export default function Settings() {
     setForm((prev) => ({ ...prev, [key]: value }));
     const fieldErr = validateField(key, value);
     setErrors((prev) => ({ ...prev, [key]: fieldErr }));
+  }
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingLogo(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `logo-${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('logos')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) {
+        console.error('Erreur upload logo:', uploadError);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('logos')
+        .getPublicUrl(fileName);
+
+      update('company_logo', urlData.publicUrl);
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
+
+  function removeLogo() {
+    update('company_logo', '');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   }
 
   async function handleSave() {
@@ -72,7 +111,9 @@ export default function Settings() {
         company_name: form.company_name,
         company_address: form.company_address,
         company_phone: form.company_phone,
+        company_phone2: form.company_phone2,
         company_email: form.company_email,
+        company_logo: form.company_logo,
         rc: form.rc,
         nif: form.nif,
         ai: form.ai,
@@ -117,9 +158,55 @@ export default function Settings() {
           </div>
           <h3 className="font-semibold text-slate-800">Entreprise</h3>
         </div>
+
+        {/* Logo upload */}
+        <div className="mb-5">
+          <label className="block text-sm font-medium text-slate-700 mb-2">Logo de l'entreprise</label>
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 rounded-xl border-2 border-slate-200 flex items-center justify-center overflow-hidden bg-slate-50 shrink-0">
+              {form.company_logo ? (
+                <img src={form.company_logo} alt="Logo" className="w-full h-full object-contain" />
+              ) : (
+                <ImageIcon className="w-8 h-8 text-slate-300" />
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleLogoUpload}
+                className="hidden"
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingLogo}
+              >
+                <Upload className="w-4 h-4" />
+                {uploadingLogo ? 'Chargement...' : 'Téléverser un logo'}
+              </Button>
+              {form.company_logo && (
+                <button
+                  onClick={removeLogo}
+                  className="text-sm text-red-500 hover:text-red-700 flex items-center gap-1"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Supprimer le logo
+                </button>
+              )}
+            </div>
+          </div>
+          <p className="text-xs text-slate-400 mt-2">
+            Le logo apparaîtra dans l'en-tête des bons de commande, factures et bons de livraison.
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input label="Nom de l'entreprise" value={form.company_name} onChange={(v) => update('company_name', v)} />
           <Input label="Téléphone" value={form.company_phone} onChange={(v) => update('company_phone', v)} error={errors.company_phone} hint={!errors.company_phone ? 'ex: +212 6 12 34 56 78' : undefined} />
+          <Input label="Téléphone 2" value={form.company_phone2} onChange={(v) => update('company_phone2', v)} hint="Numéro secondaire (optionnel)" />
           <Input label="Email" value={form.company_email} onChange={(v) => update('company_email', v)} error={errors.company_email} hint={!errors.company_email ? 'ex: contact@exemple.com' : undefined} />
           <Input label="Adresse" value={form.company_address} onChange={(v) => update('company_address', v)} />
         </div>

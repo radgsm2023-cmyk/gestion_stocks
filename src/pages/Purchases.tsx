@@ -590,12 +590,13 @@ export default function Purchases() {
 
     const company = settings;
 
-    const companyInfo = company && (company.company_name || company.company_address)
+    const companyInfo = company && (company.company_name || company.company_address || company.company_logo)
       ? `
         <div class="company-box">
+          ${company.company_logo ? `<img src="${company.company_logo}" alt="Logo" class="company-logo" />` : ''}
           ${company.company_name ? `<div class="company-name">${escapeHtml(company.company_name)}</div>` : ''}
           ${company.company_address ? `<div>${escapeHtml(company.company_address)}</div>` : ''}
-          ${company.company_phone ? `<div>Tél : ${escapeHtml(company.company_phone)}</div>` : ''}
+          ${company.company_phone ? `<div>Tél : ${escapeHtml(company.company_phone)}${company.company_phone2 ? ` / ${escapeHtml(company.company_phone2)}` : ''}</div>` : ''}
           ${company.company_email ? `<div>${escapeHtml(company.company_email)}</div>` : ''}
           ${(company.rc || company.nif || company.ai) ? `<div class="company-ids">${company.rc ? `RC: ${escapeHtml(company.rc)} · ` : ''}${company.nif ? `NIF: ${escapeHtml(company.nif)} · ` : ''}${company.ai ? `AI: ${escapeHtml(company.ai)}` : ''}</div>` : ''}
         </div>
@@ -671,6 +672,13 @@ export default function Purchases() {
             text-align: right;
             font-size: 13px;
             color: #475569;
+          }
+
+          .company-logo {
+            max-width: 120px;
+            max-height: 80px;
+            margin-bottom: 6px;
+            object-fit: contain;
           }
 
           .company-name {
@@ -1810,6 +1818,9 @@ export default function Purchases() {
 
                 {settings && (
                   <div className="text-sm text-slate-600 space-y-0.5">
+                    {settings.company_logo && (
+                      <img src={settings.company_logo} alt="Logo" className="h-16 w-auto mb-1 inline-block" />
+                    )}
                     {settings.company_name && (
                       <p className="font-bold text-slate-800">{settings.company_name}</p>
                     )}
@@ -1817,7 +1828,7 @@ export default function Purchases() {
                       <p>{settings.company_address}</p>
                     )}
                     {settings.company_phone && (
-                      <p>Tél : {settings.company_phone}</p>
+                      <p>Tél : {settings.company_phone}{settings.company_phone2 ? ` / ${settings.company_phone2}` : ''}</p>
                     )}
                     {settings.company_email && (
                       <p>{settings.company_email}</p>
