@@ -952,9 +952,22 @@ export default function Purchases() {
 
     printWindow.focus();
 
-    setTimeout(() => {
-      printWindow.print();
-    }, 300);
+    const images = printWindow.document.querySelectorAll('img');
+    const imagePromises: Promise<void>[] = [];
+    images.forEach((img) => {
+      if (!img.complete) {
+        imagePromises.push(
+          new Promise((resolve) => {
+            img.onload = () => resolve();
+            img.onerror = () => resolve();
+          })
+        );
+      }
+    });
+
+    Promise.all(imagePromises).then(() => {
+      setTimeout(() => printWindow.print(), 100);
+    });
   }
 
   function escapeHtml(

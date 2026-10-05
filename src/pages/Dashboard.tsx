@@ -453,6 +453,9 @@ export default function Dashboard({
             sum +
             Number(
               purchase.total_amount ?? 0
+            ) -
+            Number(
+              purchase.handling_fee ?? 0
             )
           );
         },
